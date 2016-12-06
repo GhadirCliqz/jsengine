@@ -1,6 +1,7 @@
 package com.cliqz.jsengine;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.cliqz.jsengine.v8.JSApiException;
 import com.cliqz.jsengine.v8.JSConsole;
@@ -24,6 +25,7 @@ import java.util.concurrent.ExecutionException;
 
 public class Engine {
 
+    private final String TAG = Engine.class.getSimpleName();
     final V8Engine jsengine;
     private final Context context;
     private final Set<Object> jsApis = new HashSet<>();
@@ -61,6 +63,23 @@ public class Engine {
 
     public void startup() throws ExecutionException {
         startup(new HashMap<String, Object>());
+    }
+
+    /**
+     * Run the normal startup asynchronously on a different thread
+     * @param defaultPrefs
+     */
+    public void startupAsync(final Map<String, Object> defaultPrefs) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Engine.this.startup(defaultPrefs);
+                } catch (ExecutionException e) {
+                    Log.e(Engine.TAG, "Problem with startup", e);
+                }
+            }
+        }).start();
     }
 
     public void shutdown() {
