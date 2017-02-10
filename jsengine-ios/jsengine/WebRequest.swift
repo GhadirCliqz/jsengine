@@ -9,6 +9,9 @@ import UIKit
 import WebKit
 import JavaScriptCore
 
+// Cliqz: Fired when blocking a bad request
+public let NotificationBadRequestDetected = "NotificationBadRequestDetected"
+
 public class WebRequest {
     weak var jsContext: JSContext? = nil
     var tabs = NSMapTable.strongToWeakObjectsMapTable()
@@ -43,6 +46,8 @@ public class WebRequest {
         
         let requestInfo = getRequestInfo(request)
         if let blockResponse = getBlockResponseForRequest(requestInfo) where blockResponse.count > 0 {
+            let tabId = requestInfo["tabId"] as! Int
+            NSNotificationCenter.defaultCenter().postNotificationName(NotificationBadRequestDetected, object: tabId)
             return true
         }
         
