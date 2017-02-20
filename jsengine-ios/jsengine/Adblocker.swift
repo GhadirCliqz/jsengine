@@ -50,6 +50,26 @@ public class Adblocker {
         return blockingInfo!["totalCount"] as? Int
     }
     
+    public func getAdBlockDetails(url: String) -> [(String, Int)] {
+        var adBlockDetails = [(String, Int)]()
+        
+        if let adBlockInfo = getAdBlockingInfo(url) {
+            if let advertisersList = adBlockInfo["advertisersList"] as? [String: [String]] {
+                for (domain, adUrls) in advertisersList {
+                    let adCounts = adUrls.count
+                    var companyName = domain
+                    if companyName == "_Unknown" {
+                        companyName = "Other"
+                    }
+                    if adCounts >= 0 {
+                        adBlockDetails.append((companyName, adCounts))
+                    }
+                }
+            }
+        }
+        return adBlockDetails.sort { $0.1 == $1.1 ? $0.0.lowercaseString < $1.0.lowercaseString : $0.1 > $1.1 }
+    }
+    
     public func getAdBlockingInfo(url: String) -> [NSObject : AnyObject]? {
         guard self.engine.isRunning() else {
             return nil

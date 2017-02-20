@@ -63,6 +63,24 @@ public class AntiTracking {
         return blockingInfoRequests["unsafe"]
     }
     
+    public func getTrackerDetails(tabId: Int) -> [(String, Int)] {
+        var trackerDetails = [(String, Int)]()
+        
+        if let tabBlockInfo = getTabBlockingInfo(tabId) {
+            
+            if let companies = tabBlockInfo["companies"] as? [String: [String]],
+                let allTrackers = tabBlockInfo["trackers"] as? [String: AnyObject] {
+                for (company, trackers) in companies {
+                    let badRequestsCount = getCompanyBadRequestsCount(trackers, allTrackers:allTrackers)
+                    if badRequestsCount >= 0 {
+                        trackerDetails.append((company, badRequestsCount))
+                    }
+                }
+            }
+        }
+        return trackerDetails.sort { $0.1 == $1.1 ? $0.0.lowercaseString < $1.0.lowercaseString : $0.1 > $1.1 }
+    }
+    
     public func getTabBlockingInfo(tabId: Int) -> [NSObject : AnyObject]? {
         guard self.engine.isRunning() else {
             return nil
@@ -80,6 +98,18 @@ public class AntiTracking {
             DebugLogger.log("<< Error in AntiTracking.getTabBlockingInfo: \(error)")
         }
         return nil
+    }
+    
+    private func getCompanyBadRequestsCount(trackers: [String], allTrackers: [String: AnyObject]) -> Int {
+        var badRequestsCount = 0
+        for tracker in trackers {
+            if let trackerStatistics = allTrackers[tracker] as? [String: Int] {
+                if let badRequests = trackerStatistics["tokens_removed"] {
+                    badRequestsCount += badRequests
+                }
+            }
+        }
+        return badRequestsCount
     }
     
     public func isWhitelisted(url: String) -> Bool? {
